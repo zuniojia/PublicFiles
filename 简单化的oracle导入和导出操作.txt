@@ -1,0 +1,102 @@
+﻿
+简化的oracle导入和导出操作
+==========================
+
+注：参数中如有空格请用（半角）单引号
+
+1、说明：
+   1.1 导入导出仅限于两个相邻版本之间。（9i的数据不能直接导出到11g，可先导出到10g数据库，再由10g导出到11g）
+   1.2 在高版本里可以导入低版本的导出文件（或称数据），反之不允许。
+   1.3 导入导出可以选择“交互式、命令行、参数文件”模式之一。
+   1.4 exp/imp 是一种数据库/备份恢复工具，也可以作为不同数据库之间传递数据的工具。两个数据库所在的操作系统可以不同。exp可以将数据库数据导出为二进制文件。imp可以将导出的数据文件再导入到相同的数据库或不同的数据库。
+
+
+2、导出(exp)
+   2.1 (模式一)交互式：略。
+   2.2 (模式二)命令行：（有以下四种导出模式）
+       (1) full（全库导出）：导出除 ORDSYS, MDSYS, CTXSYS, ORDPLUGINS, LBACSYS 这些系统用户之外的所有用户的数据。
+           x:>exp userid=user/password@serviceName full=y file=(xxx.ext,...) log=xxx.log
+       (2) owner（用户导出）：导出某个或某些用户的所有权限和数据。（建议采用此法！）
+           x:>exp userid=user/password@serviceName owner=username file=(xxx.ext,...) log=xxx.log
+       (3) tables（表导出）：导出某些表(可以是不同用户的)的结构和数据。
+           x:>exp userid=user/password@serviceName tables=(xxx1,...) file=(xxx.ext,...) log=xxx.log
+       (4) tablespace（表空间导出）：表空间导出数据。
+   2.3 (模式三)参数文件：暂略。
+   2.4 主要参数说明：
+       USERID               用户名/口令@本地服务名  //必须放置在第一参数的位置!
+       FULL(N)              导出整个文件            //全库导出
+       OWNER                所有者用户名列表        //用户导出
+       TABLES               表名称列表              //表导出
+       TABLESPACES          要导出的表空间列表      //表空间导出
+       BUFFER               数据缓冲区大小（缓冲区大小如果此值设为 0 则一次只导入一条记录，对数据量大的导出可以设置较大，一般缺省值即可）
+       FILE                 输出文件 (默认为EXPDAT.DMP)（出的文件列表可以指定一个或多个文件名，缺省扩展名为.dmp，缺省导出文件名为expdat.dmp）
+       COMPRESS(Y)          导入到一个区（是否压缩选项）
+       RECORDLENGTH         IO记录的长度
+       GRANTS(Y)            导出权限
+       INCTYPE              增量导出类型（增量备份的类型:complete(完全),cumulative(累积)和incremental (增量)。只可以在全库导出模式下才可以做完全累积或增量导出，累积导出只导出自上次累积导出或完全导出以来已经修改的表，增量导出只导出自上次增量累积或完全导出以来已经修改的表，完全导出将数据库中全部对象都导出不管是否以及何时被修改）
+       INDEXES(Y)           导出索引
+       RECORD(Y)            跟踪增量导出
+       DIRECT(N)            直接路径
+       TRIGGERS(Y)          导出触发器
+       LOG                  屏幕输出的日志文件（日志文件,一般如果以命令行导入时,将log 设置上比较好可以看,到所有的导入信息,导入信息哪儿出错,导入了那些数据库对象）
+       STATISTICS           分析对象 (ESTIMATE)
+       ROWS(Y)              导出数据行（默认为Y，否则仅导出表结构）
+       PARFILE              参数文件名
+       CONSISTENT(N)        交叉表的一致性
+       CONSTRAINTS(Y)       导出的约束条件
+       OBJECT_CONSISTENT(N) 只在对象导出期间设置为读的事务处理
+       FEEDBACK(0)          每 x 行的显示进度
+       FILESIZE             每个转储文件的最大大小（exp导出文件的最大字节数超出时从文件列表中获取下一个文件名,没有,则提示输入新的文件名）
+       FLASHBACK_SCN        用于将会话快照设置回以前状态的 SCN
+       FLASHBACK_TIME       用于获取最接近指定时间的 SCN 的时间
+       QUERY                用于导出表的子集的 select 子句
+       RESUMABLE(N)         遇到与空格相关的错误时挂起
+       RESUMABLE_NAME       用于标识可恢复语句的文本字符串
+       RESUMABLE_TIMEOUT    RESUMABLE 的等待时间
+       TTS_FULL_CHECK       对 TTS 执行完整的或部分相关性检查
+       TRANSPORT_TABLESPACE(N)  导出可传输的表空间元数据
+       TEMPLATE             调用 iAS 模式导出的模板名
+
+3、导入(imp)
+
+   警告：导入前，目标数据库中的表空间名称和用户名最好完全相同!!!
+
+   3.1 (模式一)交互式：略。
+   3.2 (模式二)命令行：（有以下三种导入模式）
+       (1) full（全文件导入）：full(全文件导入):指导入文件中的所有数据,并不是指全库导入,假如文件中只存在一个表的数据全文件,导入就只能导入一个表的数据.（建议采用此法！）
+           x:>imp userid=user/password@serviceName full=y file=(xxx.ext,...) log=xxx.log
+       (2) owner（用户导入）：导入某个或某些用户的所有权限和数据。
+           x:>imp userid=user/password@serviceName owner=username file=(xxx.ext,...) log=xxx.log
+       (3) tables（表导入）：导入某些表(可以是不同用户的)的结构和数据。
+           x:>imp userid=user/password@serviceName tables=(xxx1,...) file=(xxx.ext,...) log=xxx.log
+   3.3 (模式三)参数文件：暂略。
+   3.4 主要参数说明：
+       USERID               用户名/口令@本地服务名
+       FULL(N)              导入整个文件
+       BUFFER               数据缓冲区大小
+       FILE                 输入文件 (EXPDAT.DMP)
+       FROMUSER             所有人用户名列表
+       TOUSER               用户名列表
+       SHOW(N)              只列出文件内容
+       TABLES               表名列表
+       IGNORE(N)            忽略创建错误
+       RECORDLENGTH         IO记录的长度
+       GRANTS(Y)            导入权限
+       INCTYPE              增量导入类型
+       INDEXES(Y)           导入索引
+       COMMIT(N)            提交数组插入
+       ROWS(Y)              导入数据行
+       PARFILE              参数文件名
+       LOG                  屏幕输出的日志文件
+       CONSTRAINTS(Y)       导入限制
+       DESTROY(N)           覆盖表空间数据文件
+       INDEXFILE            将表/索引信息写入指定的文件
+       SKIP_UNUSABLE        跳过不能用的
+
+4、主要参数说明：
+   4.1 show(imp)：只是用来显示备份数据文件的内容.
+　 4.2 fromuser(imp)：可以将导出文件中的一个用户模式的数据对象导入为另一个用户模式的对象，此参数表示导出文件中的用户模式.
+　 4.3 touser(imp)：此参数表示导入到数据库中时使用的用户模式对象，譬如使用全库或者用户模式导出 cams 用户的所有对象到一个文件中，导入时需要将用户模式名称改为cams1,此时fromuser为cams,touser为cams1.
+
+---------------------------------------------------------------------------------------------------
+2009-05-25 13:34:06
